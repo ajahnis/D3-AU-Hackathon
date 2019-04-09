@@ -1,0 +1,758 @@
+<!DOCTYPE HTML5>
+<html>
+<!-- Welcome to my D3 introduction document. I'm just learning about the D3 library, and it involves so many things, so allow me to take you on my journey. -->
+<!-- I'd like to note that a bunch of tools are mashed together here to make this viz. Expect to see elements of HTML, CSS, Javascript, jQuery, SVG and D3. -->
+<!-- Comments are generally placed just above the code snippet they refer to. -->
+<head>
+	<!-- This charset is basically a standard thing to add to any web document -->
+    <meta charset = "UTF-8">
+	<!-- The following code snippet is how you call and load d3 into your document. I'm working with v4, but v5 is currently out and available. -->
+    <script type = "text/javascript" src = "https://d3js.org/d3.v4.min.js"></script>
+	<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:700" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="d3_somethingelse.css">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+		integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+		crossorigin=""/>
+	<!-- Make sure you put this AFTER Leaflet's CSS -->
+	<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+		integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+		crossorigin=""></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://unpkg.com/d3-array@1"></script>
+	<script src="https://unpkg.com/d3-collection@1"></script>
+	<script src="https://unpkg.com/d3-path@1"></script>
+	<script src="https://unpkg.com/d3-shape@1"></script>
+	<script src="https://unpkg.com/d3-sankey@0"></script>
+</head>
+
+<body>
+	<!-- The div below is the house that will hold all the content added by d3. -->
+	<div class= "wholePage">
+		<div class="img_header">
+			<img src="employment-ontario.png" alt="Employment Ontario Logo" style="width:70px;height:30px;">
+		</div>
+		<div>
+			<h1>Employment Service: Service Delivery Sites With Positive Outcomes 2015/16</h1>
+		</div>
+		<div class="img_map" style="width:100%;display:flex;">
+			<div>
+				<img src="you-x-ventures-1439463-unsplash.jpg" alt="Typical Business Meeting" style="width:540px;height:360px;">
+			</div>
+			<div class="map" id="mapid" style="width:540px;height:360px;">
+			</div>
+		</div>
+		<div>
+			<h3 class= "totalClients"></h3>
+		</div>
+		<div class= "dropdown">
+			<h3>
+				Select An SDS: 
+			</h3>
+			<select id= "chooseSDS">
+			</select>
+		</div>
+		<div class="context" style="display:flex">
+			<div class="sds_info">
+			</div>
+			<div class="csd_info">
+			</div>
+		</div>
+		<div class= "charts">
+			<div class= 'barFlex' style="display:flex;justify-content:center;">
+				<div class= 'barTitle'>
+				</div>
+				<div class= "bars">
+				</div>
+			</div>
+			<div style="display:flex;justify-content:center">
+			<div class= "pies">
+				<h4>
+					Pie
+				</h4>
+				<svg class= 'svgPie'>
+				</svg>
+			</div>
+			</div>
+		</div>
+	</div>
+
+<script>
+	d3.csv("https://gist.githubusercontent.com/ajahnis/d259630ac186b82ec9ba8288638a6a0d/raw/f2ad5330f8489b5196a65fa1f065bc0af56e2dc3/gistfile2.txt", function(data) {
+	let num = 0;
+	var margin = {top: 20, right: 20, bottom: 60, left: 80};
+	let numAssistRange = [];
+	let outcomeRange = [];
+	let height = 500;
+	let width = 500;
+	let outcomeCats = ['Exit', '3 Months', '6 Months', '12 Months']
+	const xScale = d3.scaleBand()
+		.range([0, width])
+		.domain(outcomeCats)
+		.padding(0.2)
+	const positiveOut = data.map(d => {
+			numAssistRange.push(d.Num_Assist);
+			const sdsName = d.SDS_Name;
+			const sdsID = d.SDS_ID;
+			const numAssist = +d.Num_Assist;
+			const closeComp = +d.Close_Comp;
+			
+			const posOutSumExit = +d.Out_Exit_E_E + +d.Out_Exit_T_E + +d.Out_Exit_FT + 
+				+d.Out_Exit_PT + +d.Out_Exit_Appr + +d.Out_Exit_Suit + +d.Out_Exit_Prof + 
+				+d.Out_Exit_Choice + +d.Out_Exit_SE + +d.Out_Exit_A_Up + +d.Out_Exit_OSSD + 
+				+d.Out_Exit_PSE + +d.Out_Exit_Edu_Ot + +d.Out_Exit_SC + +d.Out_Exit_EO_Tra + 
+				+d.Out_Exit_EO_Lit + +d.Out_Exit_SL + +d.Out_Exit_Fed + +d.Out_Exit_MCI + +d.Out_Exit_Tra_Ot;
+			
+			outcomeRange.push(posOutSumExit);
+			
+			const posOutSum3 = +d.Out_3_E_E + +d.Out_3_T_E + +d.Out_3_FT + 
+				+d.Out_3_PT + +d.Out_3_Appr + +d.Out_3_Suit + +d.Out_3_Prof + 
+				+d.Out_3_Choice + +d.Out_3_SE + +d.Out_3_A_Up + +d.Out_3_OSSD + 
+				+d.Out_3_PSE + +d.Out_3_Edu_Ot + +d.Out_3_SC + +d.Out_3_EO_Tra + 
+				+d.Out_3_EO_Lit + +d.Out_3_SL + +d.Out_3_Fed + +d.Out_3_MCI + +d.Out_3_Tra_Ot;
+				
+			const posOutSum6 = +d.Out_6_E_E + +d.Out_6_T_E + +d.Out_6_FT + 
+				+d.Out_6_PT + +d.Out_6_Appr + +d.Out_6_Suit + +d.Out_6_Prof + 
+				+d.Out_6_Choice + +d.Out_6_SE + +d.Out_6_A_Up + +d.Out_6_OSSD + 
+				+d.Out_6_PSE + +d.Out_6_Edu_Ot + +d.Out_6_SC + +d.Out_6_EO_Tra + 
+				+d.Out_6_EO_Lit + +d.Out_6_SL + +d.Out_6_Fed + +d.Out_6_MCI + +d.Out_6_Tra_Ot;
+
+			const posOutSum12 = +d.Out_12_E_E + +d.Out_12_T_E + +d.Out_12_FT + 
+				+d.Out_12_PT + +d.Out_12_Appr + +d.Out_12_Suit + +d.Out_12_Prof + 
+				+d.Out_12_Choice + +d.Out_12_SE + +d.Out_12_A_Up + +d.Out_12_OSSD + 
+				+d.Out_12_PSE + +d.Out_12_Edu_Ot + +d.Out_12_SC + +d.Out_12_EO_Tra + 
+				+d.Out_12_EO_Lit + +d.Out_12_SL + +d.Out_12_Fed + +d.Out_12_MCI + +d.Out_12_Tra_Ot;
+			
+			var outcomes = [
+				{
+					type: 'Exit',
+					value: posOutSumExit
+				},
+				{
+					type: '3 Months',
+					value: posOutSum3
+				},
+				{
+					type: '6 Months',
+					value: posOutSum6
+				},
+								{
+					type: '12 Months',
+					value: posOutSum12
+				}
+			]
+			
+			var pieData = {
+				same3MthNo: +d.Same_Emp_3_N,
+				same3MthYes: +d.Same_Emp_3_Y,
+				train3MthNo: +d.Train_3_N,
+				train3MthYes: +d.Train_3_Y
+			}
+			
+			return {sdsName, sdsID, numAssist, closeComp, outcomes, pieData};
+		});
+		
+		
+	for (i = 0; i < data.length; i++) {
+		d3.select('#chooseSDS')
+			.append('option')
+			.attr('value', i)
+			.html(positiveOut[i].sdsName);
+	}
+	
+	var e = document.getElementById("chooseSDS");
+	let old_e = e.value;
+
+	const pieOut = data.map(d => {
+		var pieData = {
+			same3MthNo: +d.Same_Emp_3_N,
+			same3MthYes: +d.Same_Emp_3_Y
+		}
+		
+		var trainData = {
+			train3MthNo: +d.Train_3_N,
+			train3MthYes: +d.Train_3_Y
+		}
+		
+		const numAssist = +d.Num_Assist;
+		const closeComp = +d.Close_Comp;
+		
+		const sdsTitle = d.sdsName;
+		
+		var outs = {
+			numAss: (numAssist - closeComp),
+			cloCo: closeComp
+		};
+		
+		return outs;
+	});
+
+	let totalTest = [];
+	for(i = 0; i < pieOut.length; i++) {
+		let testAdd = [];
+		for (j = 0; j < Object.keys(pieOut[i]).length; j++) {
+			let name = Object.keys(pieOut[i])[j]
+			testAdd.push({
+				name: name,
+				value: pieOut[i][name]
+			});
+		}
+		totalTest.push(testAdd);
+	}
+
+	//   THIS HERE IS THE CODE FOR THE BAR CHART
+
+
+	// Define a scale that scales the range of outcome data to the size of the chart
+	const yScale = d3.scaleLinear()
+		.range([height, 0])
+		.domain([0, d3.max(outcomeRange)]);
+	
+	d3.select('.totalClients')
+		.text('Total Assisted Service Clients:' + '\n' + String(d3.sum(numAssistRange)));
+	
+	function sdsAddInfo(str) {
+		d3.select('.sds_info')
+			.append('div')
+			.text(() => {
+				return  str;
+			})
+			.attr('class', 'sdsTempText');
+	}
+	
+	function updateSdsInfo() {
+		d3.selectAll('.sdsTempText').remove();
+		console.log(positiveOut[e.value]);
+		sdsAddInfo('Number of Assisted Clients: ' + String(d3.sum(positiveOut[e.value].outcomes.map((o) => o.value))));
+		sdsAddInfo('Closure Reason - Completion: ' + String(positiveOut[e.value].closeComp));
+	}
+	
+	let barWidth = 500,
+		barHeight = 500;
+	
+	d3.select('.bars')
+		.append('svg')
+		.attr("width", barWidth + margin.left + margin.right)
+		.attr("height", barHeight + margin.top + margin.bottom);
+		
+	let svg =  d3.select('svg')
+	
+	svg.append('text')
+		.attr('class', 'title')
+		.attr('x', barWidth / 2 + (margin.left + margin.right))
+		.attr('y', 40)
+		.attr('text-anchor', 'middle')
+		.text('SDS Outcomes By Type');
+	  
+	svg.append('text')
+		.attr('class', 'label')
+		.attr('x', -(barHeight / 2) - (margin.left + margin.right))
+		.attr('y', (margin.top + margin.bottom) / 2.4)
+		.attr('transform', 'rotate(-90)')
+		.attr('text-anchor', 'middle')
+		.text('Number of Outcomes');
+		
+	svg.append('text')
+		.attr('class', 'label')
+		.attr('x', barWidth / 2 + (margin.left + margin.right))
+		.attr('y', barHeight + margin.bottom)
+		.attr('text-anchor', 'middle')
+		.text('Type of Outcomes');
+	
+	let chart = svg.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+	chart.append('g')
+		.call(d3.axisLeft(yScale));
+		
+	const makeYLines = () => d3.axisLeft()
+		.scale(yScale);
+		
+	chart.append('g')
+		.attr('transform', `translate(0, ${height})`)
+		.call(d3.axisBottom(xScale));
+		
+	chart.append('g')
+      .attr('class', 'grid')
+      .call(makeYLines()
+        .tickSize(-width, 0, 0)
+        .tickFormat('')
+      )	
+		
+	function barAnime()	{
+	
+		let barGroups = chart.selectAll()
+			.data(positiveOut[e.value].outcomes)
+			.enter()
+			.append('g')
+			.attr('class', 'barG');
+	
+		barGroups
+			.append('rect')
+			.attr('class', 'bar')
+			.attr('x', (d) => xScale(d.type))
+			.attr('y', (d) => height)
+			.attr('height', (s) => 0)
+			.transition()
+			.delay(750)
+			.duration(750)
+			.attr('y', (d) => yScale(d.value))
+			.attr('height', (s) => height - yScale(s.value))
+			.attr('width', xScale.bandwidth())
+		
+		barGroups
+			.on('mouseenter', function (actual, i) {
+				d3.selectAll('.value')
+				  .attr('opacity', 0)
+
+				d3.select(this)
+				  .transition()
+				  .duration(300)
+				  .attr('opacity', 0.6)
+				  .attr('x', (a) => xScale(a.type) - 5)
+				  .attr('width', xScale.bandwidth() + 10)
+				
+				console.log(actual);
+				
+				const y = yScale(actual.value)
+
+				line = chart.append('line')
+				  .attr('id', 'limit')
+				  .attr('x1', 0)
+				  .attr('y1', y)
+				  .attr('x2', barWidth)
+				  .attr('y2', y);
+
+				barGroups.append('text')
+				  .attr('class', 'divergence')
+				  .attr('x', (a) => xScale(a.type) + xScale.bandwidth() / 2)
+				  .attr('y', (a) => {
+					let yVal = yScale(a.value);
+					if(yVal + 40 > 500) {
+						return yVal - 10;
+					} else {
+						return yVal + 30;
+					};
+				})
+				  .attr('fill', 'white')
+				  .attr('text-anchor', 'middle')
+				  .text((a, idx) => {
+					const divergence = (a.value)
+					
+					let text = ''
+					text += `${divergence}`
+
+					return idx !== i ? text : '';
+				  })
+			  })
+			  .on('mouseleave', function () {
+				d3.selectAll('.value')
+				  .attr('opacity', 1);
+
+				d3.select(this)
+				  .transition()
+				  .duration(300)
+				  .attr('opacity', 1)
+				  .attr('x', (a) => xScale(a.type))
+				  .attr('width', xScale.bandwidth());
+
+				chart.selectAll('#limit').remove();
+				chart.selectAll('.divergence').remove();
+		});
+		
+	barGroups 
+		.append('text')
+		.attr('class', 'value')
+		.attr('x', (a) => xScale(a.type) + xScale.bandwidth() / 2)
+		.attr('y', (a) => {
+					let yVal = yScale(a.value);
+					if(yVal + 40 > 500) {
+						return yVal - 10;
+					} else {
+						return yVal + 30;
+					};
+				})
+		.attr('text-anchor', 'middle')
+		.attr('fill', 'white')
+		.text((a) => `${a.value}`);
+	}
+	
+	barAnime();
+		
+	//   THIS HERE IS THE CODE FOR THE PIE CHART
+
+    var svgPie = d3.select(".svgPie"),
+        w = 300, // Set this to automatically grab the height and width of the housing svg.
+        h = 300,
+        radius = Math.min(w, h) / 2,
+        g = svgPie.append("g").attr("transform", "translate(" + w / 2 + "," + h / 2 + ")");
+
+    var color = d3.scaleOrdinal(['#4daf4a','#377eb8','#ff7f00','#984ea3','#e41a1c']);
+
+    // Generate the pie
+    var pie = d3.pie()
+        .sort(null)
+        .value(function(d) {
+			console.log(d.value);
+			return d.value;
+	});
+
+    // Generate the arcs
+    var arc = d3.arc()
+        .outerRadius(radius)
+        .innerRadius(0);
+
+    //Generate groups
+    var arcs = d3.select('.svgPie g').selectAll("arc")
+                .data(pie(Object.values(positiveOut[0].pieData)))
+                .enter()
+                .append("g")
+                .attr("class", "arc");
+
+    //Draw arc paths
+    arcs.append("path")
+        .attr("fill", function(d, i) {
+            return color(i);
+        })
+        .attr("d", arc);
+		
+	redraw(totalTest[0]);
+	updateSdsInfo();
+
+	function update(data) {
+		var t = d3.transition()
+			.duration(750);
+			
+		var t2 = d3.transition()
+			.delay(750)
+			.duration(750);
+
+		var bars = chart.selectAll('rect');
+		var barBars = d3.selectAll('.barG rect');
+		var barText = d3.selectAll('.barG text');
+		barText.remove();
+
+		chart.selectAll('rect')
+			.transition(t)
+			.attr('height', 0)
+			.attr('y', (d) => {
+				return height;	
+			})
+			.on('end', function() {
+				/*
+				chart.selectAll('rect')
+					.data(data.outcomes)
+					.enter()
+					.append('rect')
+					.attr('x', (d) => xScale(d.type))
+					.attr('y', (d) => height)
+					.attr('height', (s) => 0)
+					.transition(t2)
+					.attr('y', (d) => yScale(d.value))
+					.attr('height', (s) => height - yScale(s.value))
+					.attr('width', xScale.bandwidth());
+					*/
+				barBars.remove().exit().data(data);				
+			});
+			
+		barAnime();
+
+		d3.select('.title')
+			.data(data)
+			.text((d) => d.sdsName);
+	};
+
+	function redraw(data){
+
+      // join
+      var arcs = d3.select('.svgPie g').selectAll(".arc")
+          .data(pie(data), function(d){
+			return d.data.name; 
+		});
+
+      // update
+      arcs 
+        .transition()
+          .duration(750)
+          .attrTween("d", arcTween);
+
+      // enter
+      arcs.enter().append("path")
+        .attr("class", "arc")
+        .attr("fill", function(d, i) { return color(i); })
+        .attr("d", arc)
+        .each(function(d) { this._current = d; });
+    }
+	
+	    // Store the displayed angles in _current.
+    // Then, interpolate from _current to the new angles.
+    // During the transition, _current is updated in-place by d3.interpolate.
+    function arcTween(a) {
+      var i = d3.interpolate(this._current, a);
+      this._current = i(0);
+      return function(t) {
+        return arc(i(t));
+      };
+    }
+	
+	function myFunction() {
+		var svg = d3.select("#mapid").select("svg");
+		updateSdsInfo();
+		update(positiveOut[e.value]);
+		redraw(totalTest[e.value]);
+		
+		d3.select('.hi')
+			.classed('hi', false)
+			.transition()
+			.duration(750)
+			.attr('stroke-width', '1')
+			.attr('stroke', 'gray');
+			
+		old_e = e.value;
+		
+		d3.select(`#pt_${positiveOut[old_e].sdsID}`)
+			.classed('hi', true)
+			.transition()
+			.delay(750)
+			.duration(750)
+			.attr('stroke-width', '10')
+			.attr('stroke', 'green')
+			.attr('opacity', '1');
+	}
+	
+	var mymap = L.map('mapid').setView([51.2538, -85.3232], 4);
+			
+	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		maxZoom: 18,
+		id: 'mapbox.streets',
+		accessToken: 'pk.eyJ1IjoiYWphY2hhcmwiLCJhIjoiY2pnejczN2JqMGJ3YjMycDQ5ajFxbmZ0OCJ9.kSIcAh5T1X1_Adt1wKjPsg'
+	}).addTo(mymap);
+	
+	L.svg().addTo(mymap);
+	
+	/*var svgMap = d3.select(mymap.getPanes().overlayPane).append("svg").attr('id', 'mapsvg'),
+		g = svgMap.append("g").attr("class", "leaflet-zoom-hide");*/
+			
+	var munic_json = "https://gist.githubusercontent.com/ajahnis/7ae4226edd42126ec62553d8326b0b99/raw/7e3adbd87cca01a51c0092847864dcbb98d1b4e6/ES_SDS_Locs.json";
+	
+	d3.json(munic_json, function(error, collection) {
+		if(error) throw error;
+	
+		function projectPoint(x, y) {
+			var point = mymap.latLngToLayerPoint(new L.LatLng(y, x));
+			this.stream.point(point.x, point.y);
+		}
+		
+		function drawFeatures(data) {
+			var svg = d3.select("#mapid").select("svg");
+		
+			var transform = d3.geoTransform({point: projectPoint}),
+				path = d3.geoPath().projection(transform);
+				
+			var featureElement = svg.selectAll("path")
+				.data(data)
+				.enter()
+				.append("path")
+				.attr("stroke", "gray")
+				.attr("fill", "rgb(142, 17, 61)")
+				.attr("fill-opacity", 0.6)
+				.attr("class", "focusable")
+				.attr("id", (d) => {
+					return  "pt_" + d.properties.SDS_Refere;
+				});
+				
+				mymap.on("moveend", update);
+				update();
+				function update() {		
+					featureElement.attr("d", path);
+				} 
+		};
+		drawFeatures(collection.features);
+	});
+	
+	$("#chooseSDS").on("change", myFunction);
+	
+	let sds_json = "https://gist.githubusercontent.com/ajahnis/31e5db2d27f9fbd81335acb03d339fde/raw/d68b3df1428571bc857ba4d49633e72c5f8990c2/ES_Spatial_Outcomes.json";
+	 
+	d3.json(sds_json, function(error, data) {
+		if(error) throw error;
+		
+		function onlyUnique(value, index, self) { 
+			return self.indexOf(value) === index;
+		}
+	
+	//D3 Zommable Icicle
+	
+		let initData = d3.nest()
+			.key(function(d){return d.attributes.PRNAME;})
+			.key(function(d){return d.attributes.Region;})
+			.key(function(d){return d.attributes.ERNAME;})
+			.key(function(d){return d.attributes.CDNAME;})
+			.key(function(d){return d.attributes.CSDNAME;})
+			.key(function(d){return d.attributes.Service_De;})
+			.rollup(function(d) {
+				return +d[0].attributes.Num_Assist;
+			})
+			.entries(data.features);
+		
+	//color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.features.length + 1));
+	color = d3.scaleOrdinal()
+				.domain(['Central', 'Western', 'Eastern', 'Northern'])
+				.range(['rgb(110, 64, 170)', 'rgb(254, 75, 131)', 'rgb(226, 183, 47)', 'rgb(29, 223, 163)']);
+	width3 = 540;
+	height3 = 360;
+	
+	d3.select('.charts')
+		.append('div')
+		.style('width', `${width3}px`)
+		.style('height', `${height3}px`)
+		.style('background-color', 'white')
+		.append('svg')
+		.attr('class', 'icicle');
+	
+	format = d3.format(",d");
+	
+	partition = data => {
+	  const root = d3.hierarchy(data, function(d) {
+		return d.values;
+	})
+		  .sum(d => d.value)
+		  .sort((a, b) => b.height3 - a.height3 || b.value - a.value); 
+	  return d3.partition()
+		  .size([height3, (root.height + 1) * width3 / 3])
+		(root);
+	}
+		
+	const root = partition(initData[0], function(d) {
+		if(d.values == null) {
+			return d.value;
+		}
+		return d.values;
+	})
+	let focus_here = root;
+
+	const svg = d3.select('.icicle')
+	  .style("width", "100%")
+	  .style("height", "100%")
+	  .style("overflow", "hidden")
+	  .style("font", "10px sans-serif");
+	  
+	const cell = svg
+	.selectAll("g")
+	.data(root.descendants())
+	.enter()
+	.append('g')
+	  .attr("transform", d => `translate(${d.y0},${d.x0})`);
+
+	const rect = cell.append("rect")
+	  .attr("width", d => d.y1 - d.y0 - 1)
+	  .attr("height", d => rectHeight(d))
+	  .attr("fill-opacity", 0.6)
+	  .attr("fill", d => {
+		if (!d.depth) return "#ccc";
+		while (d.depth > 1) d = d.parent;
+		return color(d.data.key);
+	  })
+	  .style("cursor", "pointer")
+	  .on("click", clicked);
+
+	const text = cell.append("text")
+	  .style("user-select", "none")
+	  .attr("pointer-events", "none")
+	  .attr("x", 4)
+	  .attr("y", 13)
+	  .attr("fill-opacity", d => +labelVisible(d));
+
+	text.append("tspan")
+	  .text(d => d.data.key);
+
+	const tspan = text.append("tspan")
+	  .attr("fill-opacity", d => labelVisible(d) * 0.7)
+	  .text(d => ` ${format(d.value)}`);
+
+	cell.append("title")
+	  .text(d => `${d.ancestors().map(d => d.data.key).reverse().join("/")}\n${format(d.value)}`);
+
+	function clicked(p) {
+	focus = focus === p ? p = p.parent : p;
+
+	root.each(d => d.target = {
+	  x0: (d.x0 - p.x0) / (p.x1 - p.x0) * height3,
+	  x1: (d.x1 - p.x0) / (p.x1 - p.x0) * height3,
+	  y0: d.y0 - p.y0,
+	  y1: d.y1 - p.y0
+	});
+
+	const t = cell.transition().duration(750)
+		.attr("transform", d => `translate(${d.target.y0},${d.target.x0})`);
+
+	rect.transition(t).attr("height", d => rectHeight(d.target));
+	text.transition(t).attr("fill-opacity", d => +labelVisible(d.target));
+	tspan.transition(t).attr("fill-opacity", d => labelVisible(d.target) * 0.7);
+	}
+
+	function rectHeight(d) {
+	return d.x1 - d.x0 - Math.min(1, (d.x1 - d.x0) / 2);
+	}
+
+	function labelVisible(d) {
+	return d.y1 <= width3 && d.y0 >= 0 && d.x1 - d.x0 > 16;
+	}
+
+	return svg.node();
+	})
+	
+/*	
+	d3.interval(function() {
+		if (num >= positiveOut.length) {
+			num = 0;
+		} else {
+			num++;
+		};
+		update(positiveOut[num]);
+		redraw(totalTest[num]);
+	}, 1000);
+*/
+
+/* SDS Grid
+		let numAssistRange = []
+		
+		const sdsData = data.map(d => {
+			numAssistRange.push(d.Num_Assist)
+		});
+
+		var colourScale = d3.scaleSequential()
+			.domain([d3.min(numAssistRange), d3.max(numAssistRange)])
+			.interpolator(d3.interpolateCool);
+
+		let sqAmount = Math.ceil(Math.sqrt(data.length))
+		
+		d3.select('.container')
+			.style('margin', '20px')
+			.style('display', 'grid')
+			.style('grid-template-columns', `repeat(${sqAmount}, 1fr)`)
+			.style('grid-template-rows', `repeat(${sqAmount}, 1fr)`)
+
+		for(i = 1; i <= sqAmount; i++) {
+			for(j = 1; j <= sqAmount; j++) {
+				d3.select('.container')
+					.append('div')
+					.attr('class', 'sdsDivs')
+					.style('grid-area', `$(i) / $(j) / $(i+1) / $(j+1)`);
+			}
+		}
+
+		d3.selectAll('.sdsDivs')
+			.data(data)
+			.style('background-color', function(d) {
+				return colourScale(d.Num_Assist);
+			})
+			.text((d, i) => {return d.SDS_Name;})
+			.style('font-size', '0.35rem');
+*/
+
+	});
+</script>
+
+</body>

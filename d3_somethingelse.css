@@ -1,0 +1,106 @@
+.wholePage {
+	margin: 10px;
+	width: 99%;
+	height: 99%;
+}
+
+html, select {
+	font-family: Segoe UI Semibold;
+	background-color: rgb(142, 17, 61);
+	color: white;
+}
+
+h1, h2, h3 {
+	text-align: center;
+	font-family: Segoe UI Semibold;
+}
+
+h3 {
+	padding: 0px 10px;
+}
+
+.dropdown {
+	display: flex;
+	justify-content: center;
+	margin: 10px;
+}
+
+select {
+	background-color: #C1265A;
+}
+
+.img_map {
+	justify-content: space-evenly;
+}
+
+.img_header {
+	display: flex;
+	justify-content: center;
+}
+
+#mapid {
+	height: 100%;
+	width: 100%;
+}
+
+.sdsTempText {
+	font-size: 1.25rem;
+}
+
+.charts {
+	height: 50vh;
+	width: 100%;
+}
+
+.grid .domain {
+	opacity: 0;
+}
+
+.bars {
+	fill: black;
+}
+
+line {
+  stroke: gray;
+}
+
+line#limit {
+  stroke: #FED966;
+  stroke-width: 3;
+  stroke-dasharray: 3 6;
+}
+
+.pies {
+	width: 500px;
+	height: 500px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: rgb(142, 17, 61);
+}
+
+.svgPie {
+	width: 300px;
+	height: 300px;
+}
+
+.arc:hover {
+	fill: red;
+}
+
+.hi {
+	fill: green;
+}
+
+rect:hover {
+	fill: yellow;
+}
+
+rect:active {
+	fill: orange;
+}
+
+.grid .tick line {
+  stroke: #9FAAAE;
+  stroke-opacity: 0.3;
+}
